@@ -10,6 +10,7 @@ setup(
         'numpy',
         'Keras',
         'Pillow',
-        'matplotlib'
+        'matplotlib',
+        'tensorflow',
     ]
 )
