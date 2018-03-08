@@ -14,6 +14,9 @@
 
 """Utilites to computed GuidedBackprop SaliencyMasks"""
 
+import os
+import tempfile
+
 import keras.backend as K
 import numpy as np
 import tensorflow as tf
@@ -35,12 +38,15 @@ class GuidedBackprop(SaliencyMask):
     def __init__(self, model, output_index=0, custom_loss=None):
         """Constructs a GuidedBackprop SaliencyMask."""
 
+        super().__init__(model, output_index)
+
         if GuidedBackprop.GuidedReluRegistered is False:
             @tf.RegisterGradient("GuidedRelu")
             def _GuidedReluGrad(op, grad):
                 gate_g = tf.cast(grad > 0, "float32")
                 gate_y = tf.cast(op.outputs[0] > 0, "float32")
                 return gate_y * gate_g * grad
+
         GuidedBackprop.GuidedReluRegistered = True
 
         """ 
@@ -52,24 +58,27 @@ class GuidedBackprop(SaliencyMask):
             Basic Idea: save keras model => create new keras model with learning phase set to 0 => save
             the tensorflow graph => create new tensorflow graph with ReLU replaced by GuiededReLU.
         """
-        model.save('/tmp/gb_keras.h5')
+        tmp_dir = tempfile.gettempdir()
+        tmp_model_path = os.path.join(tmp_dir, 'gb_keras.h5')
+        tmp_guided_backprop_ckpt = os.path.join(tmp_dir, 'guided_backprop_ckpt')
+        model.save(tmp_model_path)
         with tf.Graph().as_default():
             with tf.Session().as_default():
                 K.set_learning_phase(0)
-                load_model('/tmp/gb_keras.h5', custom_objects={"custom_loss": custom_loss})
+                load_model(tmp_model_path, custom_objects={"custom_loss": custom_loss})
                 session = K.get_session()
                 tf.train.export_meta_graph()
 
                 saver = tf.train.Saver()
-                saver.save(session, '/tmp/guided_backprop_ckpt')
+                saver.save(session, tmp_guided_backprop_ckpt)
 
         self.guided_graph = tf.Graph()
         with self.guided_graph.as_default():
             self.guided_sess = tf.Session(graph=self.guided_graph)
 
             with self.guided_graph.gradient_override_map({'Relu': 'GuidedRelu'}):
-                saver = tf.train.import_meta_graph('/tmp/guided_backprop_ckpt.meta')
-                saver.restore(self.guided_sess, '/tmp/guided_backprop_ckpt')
+                saver = tf.train.import_meta_graph(tmp_guided_backprop_ckpt + '.meta')
+                saver.restore(self.guided_sess, tmp_guided_backprop_ckpt)
 
                 self.imported_y = self.guided_graph.get_tensor_by_name(model.output.name)[0][output_index]
                 self.imported_x = self.guided_graph.get_tensor_by_name(model.input.name)
