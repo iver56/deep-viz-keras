@@ -22,11 +22,11 @@ Courtesy of https://github.com/tensorflow/saliency and https://github.com/mbojar
 
 # Usage
 
-cd deep-viz-keras
+`pip install git+https://github.com/iver56/deep-viz-keras.git`
 
 ```python
-from guided_backprop import GuidedBackprop
-from utils import *
+from keras_deep_viz.guided_backprop import GuidedBackprop
+from keras_deep_viz.utils import *
 from keras.applications.vgg16 import VGG16
 
 # Load the pretrained VGG16 model and make the guided backprop operator
