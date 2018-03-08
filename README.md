@@ -1,4 +1,3 @@
-
 This repository contains the implementations in Keras of various methods to understand the prediction by a Convolutional Neural Networks. Implemented methods are:
 
 * Vanila gradient [https://arxiv.org/abs/1312.6034]
