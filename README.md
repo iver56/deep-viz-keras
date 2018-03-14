@@ -22,7 +22,7 @@ Courtesy of https://github.com/tensorflow/saliency and https://github.com/mbojar
 
 # Usage
 
-`pip install git+https://github.com/iver56/deep-viz-keras.git`
+`pip install git+https://github.com/iver56/keras-deep-viz.git`
 
 ```python
 from keras_deep_viz.guided_backprop import GuidedBackprop
